@@ -16,13 +16,16 @@ import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import shoeImg from "../assets/shoe.png";
 import headphonesImg from "../assets/headphones.png";
+import { useContext } from "react";
+import { UserAuthContext } from "../contexts/UserAuthContext";
 
 const Home = () => {
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [topDeals, setTopDeals] = useState([]);
   const [loading, setLoading] = useState(true);
-
+  const [store,setStore]=useState()
+  const {isLoggedIn,setisLoggedIn}=useContext(UserAuthContext)
   const navLinks = [
     { name: "Home", path: "/" },
     { name: "Shop", path: "/shop" },
@@ -51,8 +54,8 @@ const Home = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await axios.get("https://fakestoreapi.com/products?limit=4");
-        setTopDeals(res.data);
+        const res = await axios.get("http://localhost:3000/api/products/getProducts/4");
+        setTopDeals(res.data.products);
       } catch (err) {
         console.error("Failed to fetch products:", err);
       } finally {
@@ -61,6 +64,19 @@ const Home = () => {
     };
     fetchProducts();
   }, []);
+
+  const handleStoreClick=async ()=>{
+    console.log("the user is currently",isLoggedIn)
+    if(isLoggedIn){
+      const response=await axios.get("http://localhost:3000/api/auth/logout/",{
+        withCredentials:true
+      })
+      if(response.status===200){
+        setisLoggedIn(false)
+        navigate("/auth")
+      }
+    }
+  }
 
   return (
     <div className="min-h-screen bg-black text-white selection:bg-yellow-500/30 overflow-x-hidden">
@@ -114,11 +130,11 @@ const Home = () => {
           {/* Right Icons */}
           <div className="flex items-center gap-3">
             <button
-              onClick={() => navigate("/auth")}
+              onClick={() => handleStoreClick()}
               className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full border border-yellow-600/30 bg-yellow-500/10 text-yellow-400 text-sm font-medium hover:bg-yellow-500/20 transition-all duration-300"
             >
               <User className="h-4 w-4" />
-              <span>Store</span>
+              <span>{isLoggedIn&&"Store"}</span>
             </button>
             <button className="p-2.5 rounded-full border border-yellow-600/30 bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20 transition-all duration-300">
               <Mail className="h-4 w-4" />
@@ -279,7 +295,7 @@ const Home = () => {
             ))
             : topDeals.map((product, i) => (
               <motion.div
-                key={product.id}
+                key={product._id}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}

@@ -37,8 +37,8 @@ const Shop = () => {
     useEffect(() => {
         const fetchProducts = async () => {
             try {
-                const res = await axios.get("https://fakestoreapi.com/products");
-                setProducts(res.data);
+                const res = await axios.get("http://localhost:3000/api/products/getProducts/limit=4");
+                setProducts(res.data.products);
             } catch (err) {
                 console.error("Failed to fetch products:", err);
             } finally {
@@ -168,7 +168,7 @@ const Shop = () => {
                             ))
                             : filteredProducts.map((product, i) => (
                                 <motion.div
-                                    key={product.id}
+                                    key={product._id}
                                     layout
                                     initial={{ opacity: 0, scale: 0.9 }}
                                     animate={{ opacity: 1, scale: 1 }}

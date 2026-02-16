@@ -4,6 +4,8 @@ import { User, Lock, Mail, ArrowRight, ArrowLeft, Send, KeyRound, CheckCircle } 
 import axios from "axios";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
+import { useContext } from "react";
+import { UserAuthContext } from "../contexts/UserAuthContext";
 
 const Auth = () => {
 	const [isLogin, setIsLogin] = useState(true);
@@ -16,6 +18,7 @@ const Auth = () => {
 	const [confirmNewPassword, setConfirmNewPassword] = useState("")
 	const navigate = useNavigate();
 	const [details, setDetails] = useState({});
+	const {isLoggedIn,setisLoggedIn}=useContext(UserAuthContext)
 
 	const handleChange = (e) => {
 		const { name, value } = e.target;
@@ -45,9 +48,12 @@ const Auth = () => {
 			console.log(details);
 			
 			try {
-				const response = await axios.post("http://localhost:3000/api/auth/login", details);
+				const response = await axios.post("http://localhost:3000/api/auth/login", details,{
+					withCredentials:true
+				});
 				if (response.status == 200) {
 					toast("User Logged In Successfully");
+					setisLoggedIn(true)
 					navigate("/");
 				} else {
 					toast.error("Invalid Credentials");

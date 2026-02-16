@@ -42,7 +42,7 @@ const Deals = () => {
     useEffect(() => {
         const fetchDeals = async () => {
             try {
-                const res = await axios.get("https://fakestoreapi.com/products");
+                const res = await axios.get("http://localhost:3000/api/products/getProducts/");
                 const products = res.data;
                 // First 4 = flash deals, next 4 = weekly deals
                 const addDealInfo = (p, i) => ({
