@@ -12,23 +12,51 @@ import { useState } from 'react'
 import axios from 'axios'
 axios.defaults.withCredentials = true;
 const App = () => {
-  const [isLoggedIn,setisLoggedIn]=useState(false)
-  const checkLogin=async ()=>{
-    const response=await axios.get("http://localhost:3000/api/auth/verify")
-    if(response.status===200){
-      setisLoggedIn(true)
+  const [isLoggedIn, setisLoggedIn] = useState(false)
+  const [LikedIds, setLikedIds] = useState([])
+  const checkLogin = async () => {
+    try {
+
+      const response = await axios.get("http://localhost:3000/api/auth/verify")
+      if (response.status === 200) {
+        setisLoggedIn(true)
+      }
+      else {
+        setisLoggedIn(false)
+      }
     }
-    else{
-      setisLoggedIn(false)
+    catch (err) {
+      console.log("error", err)
+      setisLoggedIn(false)    
     }
-    
+
   }
-  useEffect(()=>{
+  useEffect(() => {
     checkLogin()
-  },[])
+  }, [])
+  useEffect(() => {
+    if (!isLoggedIn) {
+      setLikedIds([])
+      return
+    }
+    const fetchLikedProducts = async () => {
+
+      try {
+        const response = await axios.get("http://localhost:3000/api/products/getLikedProducts/", { withCredentials: true })
+        const ids = response.data.likedList.map(p => p._id)
+
+        console.log("the ids are", ids)
+        setLikedIds(ids)
+      }
+      catch (err) {
+        console.log(err)
+      }
+    }
+    fetchLikedProducts()
+  }, [isLoggedIn])
   return (
     <div>
-      <UserAuthContext.Provider value={{isLoggedIn,setisLoggedIn}}>
+      <UserAuthContext.Provider value={{ isLoggedIn, setisLoggedIn, LikedIds, setLikedIds }}>
 
         <ToastContainer />
         <Routes>

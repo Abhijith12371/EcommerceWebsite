@@ -15,6 +15,8 @@ import {
 } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
+import { useContext } from "react";
+import { UserAuthContext } from "../contexts/UserAuthContext";
 
 const CountdownUnit = ({ value, label }) => (
     <div className="flex flex-col items-center">
@@ -31,7 +33,7 @@ const Deals = () => {
     const [flashDeals, setFlashDeals] = useState([]);
     const [weeklyDeals, setWeeklyDeals] = useState([]);
     const [loading, setLoading] = useState(true);
-
+    const { isLoggedIn, setisLoggedIn } = useContext(UserAuthContext)
     const navLinks = [
         { name: "Home", path: "/" },
         { name: "Shop", path: "/shop" },
@@ -42,8 +44,8 @@ const Deals = () => {
     useEffect(() => {
         const fetchDeals = async () => {
             try {
-                const res = await axios.get("http://localhost:3000/api/products/getProducts/");
-                const products = res.data;
+                const res = await axios.get("http://localhost:3000/api/products/getProducts/all");
+                const products = res.data.products;
                 // First 4 = flash deals, next 4 = weekly deals
                 const addDealInfo = (p, i) => ({
                     ...p,
@@ -61,6 +63,20 @@ const Deals = () => {
         };
         fetchDeals();
     }, []);
+    const handleStoreClick = async () => {
+        try {
+            await axios.get("http://localhost:3000/api/auth/logout", {
+                withCredentials: true
+            });
+
+            setisLoggedIn(false);
+            navigate("/auth");
+
+        } catch (err) {
+            console.log(err);
+        }
+    };
+
 
     return (
         <div className="min-h-screen bg-black text-white selection:bg-yellow-500/30 overflow-x-hidden">
@@ -84,8 +100,8 @@ const Deals = () => {
                         ))}
                     </div>
                     <div className="flex items-center gap-3">
-                        <button onClick={() => navigate("/auth")} className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full border border-yellow-600/30 bg-yellow-500/10 text-yellow-400 text-sm font-medium hover:bg-yellow-500/20 transition-all duration-300">
-                            <User className="h-4 w-4" /><span>Store</span>
+                        <button onClick={() => handleStoreClick()} className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full border border-yellow-600/30 bg-yellow-500/10 text-yellow-400 text-sm font-medium hover:bg-yellow-500/20 transition-all duration-300">
+                            <User className="h-4 w-4" /><span>{isLoggedIn ? "Logout" : "Login"}</span>
                         </button>
                         <button className="p-2.5 rounded-full border border-yellow-600/30 bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20 transition-all duration-300"><Mail className="h-4 w-4" /></button>
                         <button className="p-2.5 rounded-full border border-yellow-600/30 bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20 transition-all duration-300"><ShoppingCart className="h-4 w-4" /></button>

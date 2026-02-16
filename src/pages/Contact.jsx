@@ -13,11 +13,14 @@ import {
     X,
 } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
+import { useContext } from "react";
+import { UserAuthContext } from "../contexts/UserAuthContext";
 
 const Contact = () => {
     const navigate = useNavigate();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [formData, setFormData] = useState({ name: "", email: "", subject: "", message: "" });
+    const { isLoggedIn, setisLoggedIn } = useContext(UserAuthContext)
 
     const navLinks = [
         { name: "Home", path: "/" },
@@ -43,6 +46,21 @@ const Contact = () => {
         console.log("Form submitted:", formData);
     };
 
+    const handleStoreClick = async () => {
+        try {
+            await axios.get("http://localhost:3000/api/auth/logout", {
+                withCredentials: true
+            });
+
+            setisLoggedIn(false);
+            navigate("/auth");
+
+        } catch (err) {
+            console.log(err);
+        }
+    };
+
+
     return (
         <div className="min-h-screen bg-black text-white selection:bg-yellow-500/30 overflow-x-hidden">
             {/* Background */}
@@ -65,8 +83,8 @@ const Contact = () => {
                         ))}
                     </div>
                     <div className="flex items-center gap-3">
-                        <button onClick={() => navigate("/auth")} className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full border border-yellow-600/30 bg-yellow-500/10 text-yellow-400 text-sm font-medium hover:bg-yellow-500/20 transition-all duration-300">
-                            <User className="h-4 w-4" /><span>Store</span>
+                        <button onClick={() => handleStoreClick()} className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full border border-yellow-600/30 bg-yellow-500/10 text-yellow-400 text-sm font-medium hover:bg-yellow-500/20 transition-all duration-300">
+                            <User className="h-4 w-4" /><span>{isLoggedIn ? "Logout" : "Login"}</span>
                         </button>
                         <button className="p-2.5 rounded-full border border-yellow-600/30 bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20 transition-all duration-300"><Mail className="h-4 w-4" /></button>
                         <button className="p-2.5 rounded-full border border-yellow-600/30 bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20 transition-all duration-300"><ShoppingCart className="h-4 w-4" /></button>

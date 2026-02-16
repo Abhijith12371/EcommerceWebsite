@@ -15,16 +15,20 @@ import {
 } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
+import { useContext } from "react";
+import { UserAuthContext } from "../contexts/UserAuthContext";
 
 const Shop = () => {
     const navigate = useNavigate();
+
+    const { isLoggedIn, setisLoggedIn } = useContext(UserAuthContext)
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState("All");
     const [searchQuery, setSearchQuery] = useState("");
     const [sortBy, setSortBy] = useState("Popular");
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
-
+    const {LikedIds, setLikedIds} = useContext(UserAuthContext)
     const navLinks = [
         { name: "Home", path: "/" },
         { name: "Shop", path: "/shop" },
@@ -47,6 +51,45 @@ const Shop = () => {
         };
         fetchProducts();
     }, []);
+
+
+
+    const handleStoreClick = async () => {
+        try {
+            await axios.get("http://localhost:3000/api/auth/logout", {
+                withCredentials: true
+            });
+
+            setisLoggedIn(false);
+            navigate("/auth");
+
+        } catch (err) {
+            console.log(err);
+        }
+    };
+
+
+    const handleLike = async (id) => {
+        if (LikedIds.includes(id)) {
+            const response = await axios.post("http://localhost:3000/api/products/dislikeProduct/", {
+                id: id
+            }, { withCredentials: true })
+            setLikedIds(prev => prev.filter(item => item !== id))
+        }
+
+        else {
+
+            const response = await axios.post("http://localhost:3000/api/products/likeProduct/", {
+                id: id
+            }, { withCredentials: true })
+            if (response.status === 200) {
+                // toast.sucess("Datareceive")
+                console.log("The item liked")
+                setLikedIds(prev => [...prev, id])
+            }
+        }
+        console.log("the liked IDS", LikedIds)
+    }
 
     const filteredProducts = products
         .filter((p) => {
@@ -83,8 +126,8 @@ const Shop = () => {
                         ))}
                     </div>
                     <div className="flex items-center gap-3">
-                        <button onClick={() => navigate("/auth")} className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full border border-yellow-600/30 bg-yellow-500/10 text-yellow-400 text-sm font-medium hover:bg-yellow-500/20 transition-all duration-300">
-                            <User className="h-4 w-4" /><span>Store</span>
+                        <button onClick={() => handleStoreClick()} className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full border border-yellow-600/30 bg-yellow-500/10 text-yellow-400 text-sm font-medium hover:bg-yellow-500/20 transition-all duration-300">
+                            <User className="h-4 w-4" /><span>{isLoggedIn ? "Logout" : "Login"}</span>
                         </button>
                         <button className="p-2.5 rounded-full border border-yellow-600/30 bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20 transition-all duration-300"><Mail className="h-4 w-4" /></button>
                         <button className="p-2.5 rounded-full border border-yellow-600/30 bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20 transition-all duration-300"><ShoppingCart className="h-4 w-4" /></button>
@@ -166,52 +209,67 @@ const Shop = () => {
                                     <div className="rounded-2xl bg-black/70 h-80 animate-pulse" />
                                 </div>
                             ))
-                            : filteredProducts.map((product, i) => (
-                                <motion.div
-                                    key={product._id}
-                                    layout
-                                    initial={{ opacity: 0, scale: 0.9 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    exit={{ opacity: 0, scale: 0.9 }}
-                                    transition={{ delay: i * 0.05 }}
-                                    whileHover={{ y: -5 }}
-                                    className="group relative rounded-2xl p-0.5 bg-gradient-to-br from-yellow-500/25 via-yellow-500/5 to-yellow-500/15 cursor-pointer"
-                                >
-                                    <div className="rounded-2xl bg-black/70 backdrop-blur-xl overflow-hidden h-full relative">
-                                        {/* Badge */}
-                                        {product.rating.rate >= 4.5 && (
-                                            <div className="absolute top-3 left-3 z-20 px-2.5 py-1 rounded-full bg-yellow-500/20 border border-yellow-500/40 text-[10px] font-bold text-yellow-400 uppercase tracking-wider">
-                                                Top Rated
+                            : filteredProducts.map((product, i) => {
+
+                                const isLiked = LikedIds.includes(product._id)
+
+                                return (
+                                    <motion.div
+                                        key={product._id}
+                                        layout
+                                        initial={{ opacity: 0, scale: 0.9 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        exit={{ opacity: 0, scale: 0.9 }}
+                                        transition={{ delay: i * 0.05 }}
+                                        whileHover={{ y: -5 }}
+                                        className="group relative rounded-2xl p-0.5 bg-gradient-to-br from-yellow-500/25 via-yellow-500/5 to-yellow-500/15 cursor-pointer"
+                                    >
+                                        <div className="rounded-2xl bg-black/70 backdrop-blur-xl overflow-hidden h-full relative">
+                                            {/* Badge */}
+                                            {product.rating.rate >= 4.5 && (
+                                                <div className="absolute top-3 left-3 z-20 px-2.5 py-1 rounded-full bg-yellow-500/20 border border-yellow-500/40 text-[10px] font-bold text-yellow-400 uppercase tracking-wider">
+                                                    Top Rated
+                                                </div>
+                                            )}
+                                            {/* Wishlist */}
+                                            <button
+                                                onClick={() => handleLike(product._id)}
+                                                className={`absolute top-3 right-3 z-20 p-2 rounded-full 
+    bg-black/40 border border-white/10 
+    transition-all
+    ${isLiked
+                                                        ? "text-red-500 border-red-500/40"
+                                                        : "text-gray-500 hover:text-red-400 hover:border-red-400/30"
+                                                    }`}
+                                            >
+                                                <Heart className={`h-3.5 w-3.5 ${isLiked ? "fill-red-500" : ""}`} />
+                                            </button>
+
+                                            {/* Image */}
+                                            <div className="relative h-48 bg-gradient-to-br from-yellow-900/15 to-black/60 flex items-center justify-center p-6 overflow-hidden">
+                                                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[60%] h-16 bg-yellow-600/15 rounded-full blur-2xl" />
+                                                <img src={product.image} alt={product.title} className="relative z-10 h-full max-h-36 object-contain drop-shadow-[0_8px_20px_rgba(234,179,8,0.25)] group-hover:scale-105 transition-transform duration-500" />
                                             </div>
-                                        )}
-                                        {/* Wishlist */}
-                                        <button className="absolute top-3 right-3 z-20 p-2 rounded-full bg-black/40 border border-white/10 text-gray-500 hover:text-red-400 hover:border-red-400/30 transition-all">
-                                            <Heart className="h-3.5 w-3.5" />
-                                        </button>
-                                        {/* Image */}
-                                        <div className="relative h-48 bg-gradient-to-br from-yellow-900/15 to-black/60 flex items-center justify-center p-6 overflow-hidden">
-                                            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[60%] h-16 bg-yellow-600/15 rounded-full blur-2xl" />
-                                            <img src={product.image} alt={product.title} className="relative z-10 h-full max-h-36 object-contain drop-shadow-[0_8px_20px_rgba(234,179,8,0.25)] group-hover:scale-105 transition-transform duration-500" />
+                                            {/* Info */}
+                                            <div className="p-4 pt-3">
+                                                <p className="text-[10px] text-gray-600 uppercase tracking-wider mb-1">{product.category}</p>
+                                                <h3 className="text-white font-bold text-sm line-clamp-1">{product.title}</h3>
+                                                <div className="flex items-center gap-1 mt-1.5">
+                                                    <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />
+                                                    <span className="text-xs text-yellow-400 font-medium">{product.rating.rate}</span>
+                                                    <span className="text-[10px] text-gray-600">({product.rating.count})</span>
+                                                </div>
+                                                <div className="flex items-center justify-between mt-3">
+                                                    <span className="text-yellow-400 font-bold">$ {product.price.toFixed(2)}</span>
+                                                    <button className="p-2 rounded-full bg-yellow-500/10 border border-yellow-600/30 text-yellow-400 hover:bg-yellow-500/20 transition-all">
+                                                        <ShoppingCart className="h-3.5 w-3.5" />
+                                                    </button>
+                                                </div>
+                                            </div>
                                         </div>
-                                        {/* Info */}
-                                        <div className="p-4 pt-3">
-                                            <p className="text-[10px] text-gray-600 uppercase tracking-wider mb-1">{product.category}</p>
-                                            <h3 className="text-white font-bold text-sm line-clamp-1">{product.title}</h3>
-                                            <div className="flex items-center gap-1 mt-1.5">
-                                                <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />
-                                                <span className="text-xs text-yellow-400 font-medium">{product.rating.rate}</span>
-                                                <span className="text-[10px] text-gray-600">({product.rating.count})</span>
-                                            </div>
-                                            <div className="flex items-center justify-between mt-3">
-                                                <span className="text-yellow-400 font-bold">$ {product.price.toFixed(2)}</span>
-                                                <button className="p-2 rounded-full bg-yellow-500/10 border border-yellow-600/30 text-yellow-400 hover:bg-yellow-500/20 transition-all">
-                                                    <ShoppingCart className="h-3.5 w-3.5" />
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </motion.div>
-                            ))}
+                                    </motion.div>
+                                )
+                            })}
                     </AnimatePresence>
                 </div>
             </section>
